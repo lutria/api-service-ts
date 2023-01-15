@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "extendedWhereUnique"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  name       String  @unique
+  privileged Boolean @default(false)
+}
+
+// model Route {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   provider     Provider    @relation(fields: [providerId], references: [id])
+//   providerId   String      @db.ObjectId
+// }
+
+model Provider {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  security  DataSecurity
+  name      String       @unique
+  sources   Source[]
+  // Processing timestamps
+  createdAt DateTime     @default(now())
+}
+
+model Source {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  security     DataSecurity
+  // Current state of this Source
+  state        SourceState  @default(UNSCANNED)
+  name         String
+  // Relation to parent Provider
+  provider     Provider     @relation(fields: [providerId], references: [id])
+  providerId   String       @db.ObjectId
+  // Provider-specific type that this Source represents
+  externalType String?
+  // Provider-specific identifier that this Source relates to
+  externalId   String
+  // Indicates whether this Source has been deleted in the system
+  deleted      Boolean      @default(false)
+  // Indicates whether this Source should be scanned
+  enabled      Boolean      @default(true)
+  // externalRef of the most recently seen MediaItem
+  scanCursor   String?
+  // Relation to child MediaItems
+  mediaItems   MediaItem[]
+  // Processing timestamps
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+  scannedAt    DateTime?
+}
+
+model MediaItem {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  security        DataSecurity
+  // Current state of this MediaItem
+  state           MediaItemState @default(SCANNED)
+  name            String
+  description     String?
+  durationSeconds Int?
+  publishedAt     DateTime?
+  // Relation to parent Source
+  source          Source         @relation(fields: [sourceId], references: [id])
+  sourceId        String         @db.ObjectId
+  // External reference, e.g. remote URL or ID
+  externalRef     String
+  // Relation to child PreviewAssets
+  previewAssets   PreviewAsset[]
+  // Processing timestamps
+  scannedAt       DateTime       @default(now())
+  reviewedAt      DateTime?
+  fetchedAt       DateTime?
+}
+
+type DataSecurity {
+  protected Boolean @default(false)
+}
+
+type PreviewAsset {
+  type        PreviewAssetType
+  // Current state of this PreviewAsset
+  state       PreviewAssetState @default(SCANNED)
+  // External reference, e.g. remote URL
+  externalRef String
+  // Internal reference, e.g. path to asset in storage
+  internalRef String?
+  // Processing timestamps
+  scannedAt   DateTime          @default(now())
+  fetchedAt   DateTime?
+}
+
+enum PreviewAssetType {
+  IMAGE
+  VIDEO
+}
+
+enum MediaItemState {
+  SCANNED
+  FETCH_APPROVED
+  FECTH_QUEUED
+  FETCH_IN_PROGRESS
+  FETCH_COMPLETE
+  FETCH_FAILED
+  // TODO: Maybe add more states relating to publishing?
+}
+
+enum PreviewAssetState {
+  SCANNED
+  FETCH_QUEUED
+  FETCH_IN_PROGRESS
+  FETCH_COMPLETE
+  FETCH_FAILED
+}
+
+enum SourceState {
+  UNSCANNED
+  SCAN_QUEUED
+  SCAN_IN_PROGRESS
+  SCAN_COMPLETE
+  SCAN_FAILED
+}
