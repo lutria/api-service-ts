@@ -1,15 +1,29 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { PrismaClient, Prisma } from '@prisma/client'
+import bodyParser from 'body-parser'
+import Bree from 'bree';
+import { PrismaClient } from '@prisma/client'
 import express from 'express'
+import path from 'path'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { NextFunction, Request, Response } from 'express'
+import jobs from './jobs'
 import { forUser } from './security'
 
 const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
+
+const bree = new Bree({
+  logger: logger,
+  jobs,
+  root: path.join(__dirname, 'jobs')
+});
+
+(async () => {
+  await bree.start()
+})()
 
 const app = express();
 
@@ -17,6 +31,7 @@ app.use(pinoHttp({
   level: process.env.LOG_LEVEL,
   useLevel: 'trace'
 }))
+app.use(bodyParser.json())
 app.use(express.json())
 
 // Middleware to create extended Prisma client with data security
@@ -102,6 +117,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   return res.status(500).json({ error: `Unexpected error: ${err.message}` })
 })
 
-const server = app.listen(3000, () => {
-  logger.info('Server ready at http://localhost:3000')
+const server = app.listen(process.env.PORT, () => {
+  logger.info(`⚡️ Server ready at http://localhost:${process.env.PORT}`)
 })
