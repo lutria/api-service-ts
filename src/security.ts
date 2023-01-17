@@ -1,10 +1,13 @@
 import { Prisma } from '@prisma/client'
+import pino from 'pino'
+
+const logger = pino({ level: process.env.LOG_LEVEL })
 
 /**
  * Determines if the named model has data security applied to it. The criterion for deciding if data security
  * applies is:
  * - Does the schema for the named model contain a field named 'security' that is of type DataSecurity
- * @param name 
+ * @param name
  * @returns true if the named model has data security applied, otherwise false
  */
 function isProtectedModel(name: string) {
@@ -15,21 +18,21 @@ function isProtectedModel(name: string) {
 export async function wrapQuery({ model, operation, args, query }: { model: string, operation: string, args: any, query: Function}, privileged: boolean) {
   if (isProtectedModel(model)) {
     if (!privileged) {
-      console.log(`Extending query for ${model}.${operation} with security filter`)
+      logger.debug(`Extending query for ${model}.${operation} with security filter`)
       args.where = { ...args.where, security: { protected: false } }
     } else {
-      console.log(`Not extending query for ${model}.${operation} with security filter because user is privileged`)
+      logger.debug(`Not extending query for ${model}.${operation} with security filter because user is privileged`)
     }
   } else {
-    console.log(`Not extending query for ${model}.${operation} because ${model} is not a protected model`)
+    logger.debug(`Not extending query for ${model}.${operation} because ${model} is not a protected model`)
   }
-  
+
   return query(args)
 }
 
 export function forUser({ privileged }: {privileged: boolean }) {
-  return Prisma.defineExtension((prisma) => 
-    prisma.$extends({ 
+  return Prisma.defineExtension((prisma) =>
+    prisma.$extends({
       query: {
         $allModels: {
           async findMany(args) {

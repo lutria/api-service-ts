@@ -1,11 +1,22 @@
+import * as dotenv from 'dotenv'
+dotenv.config()
+
 import { PrismaClient, Prisma } from '@prisma/client'
 import express from 'express'
+import pino from 'pino'
+import pinoHttp from 'pino-http'
 import { NextFunction, Request, Response } from 'express'
 import { forUser } from './security'
 
+const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
 
 const app = express();
+
+app.use(pinoHttp({
+  level: process.env.LOG_LEVEL,
+  useLevel: 'trace'
+}))
 app.use(express.json())
 
 // Middleware to create extended Prisma client with data security
@@ -19,7 +30,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   try {
     user = await prisma.user.findUniqueOrThrow({ where: { name: req.header('x-user') } })
   } catch (error) {
-    console.log(error)
+    req.log.error(error)
     return res.status(401).json({ error: "User not found" })
   }
 
@@ -87,10 +98,10 @@ app.get('/item/:id', async (req, res) => {
 })
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack)
+  req.log.error(err.stack)
   return res.status(500).json({ error: `Unexpected error: ${err.message}` })
 })
 
 const server = app.listen(3000, () => {
-  console.log('Server ready at http://localhost:3000')
+  logger.info('Server ready at http://localhost:3000')
 })
