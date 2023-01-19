@@ -124,6 +124,7 @@ enum PreviewAssetState {
 
 enum SourceState {
   UNSCANNED
+  SCAN_REQUESTED
   SCAN_QUEUED
   SCAN_IN_PROGRESS
   SCAN_COMPLETE

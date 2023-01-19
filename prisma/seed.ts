@@ -8,6 +8,10 @@ const userData: Prisma.UserCreateInput[] = [
     privileged: true
   },
   {
+    name: 'svc-lutria',
+    privileged: true
+  },
+  {
     name: 'Joe User'
   }
 ]

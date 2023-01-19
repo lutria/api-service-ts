@@ -19,7 +19,60 @@ export async function wrapQuery({ model, operation, args, query }: { model: stri
   if (isProtectedModel(model)) {
     if (!privileged) {
       logger.debug(`Extending query for ${model}.${operation} with security filter`)
-      args.where = { ...args.where, security: { protected: false } }
+
+      const securityFilter = {
+        security: {
+          is: {
+            protected: false
+          }
+        }
+      }
+
+      if (args.where) {
+        if (args.where && 'AND' in args.where) {
+          args.where = {
+            AND: [
+              ...args.where.AND,
+              {
+                ...securityFilter
+              }
+            ]
+          }
+        } else if ('OR' in args.where) {
+          args.where = {
+            AND: [
+              {
+                OR: args.where.OR
+              },
+              {
+                ...securityFilter
+              }
+            ]
+          }
+        } else if ('NOT' in args.where) {
+          args.where = {
+            AND: [
+              {
+                NOT: args.where.NOT
+              },
+              {
+                ...securityFilter
+              }
+            ]
+          }
+        } else {
+          args.where = {
+            ...args.where,
+            ...securityFilter
+          }
+        }
+      } else {
+        args.where = {
+          ...securityFilter
+        }
+      }
+
+      logger.trace(args.where)
     } else {
       logger.debug(`Not extending query for ${model}.${operation} with security filter because user is privileged`)
     }

@@ -1,29 +1,17 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import bodyParser from 'body-parser'
-import Bree from 'bree';
 import { PrismaClient } from '@prisma/client'
+import bodyParser from 'body-parser'
+import dayjs from 'dayjs'
 import express from 'express'
-import path from 'path'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { NextFunction, Request, Response } from 'express'
-import jobs from './jobs'
 import { forUser } from './security'
 
 const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
-
-const bree = new Bree({
-  logger: logger,
-  jobs,
-  root: path.join(__dirname, 'jobs')
-});
-
-(async () => {
-  await bree.start()
-})()
 
 const app = express();
 
@@ -78,6 +66,38 @@ app.get('/provider/:id/sources', async (req, res, next) => {
   if (sources === null) {
     return res.status(404).json({ error: "Provider not found" })
   }
+
+  return res.json(sources)
+})
+
+app.get('/sources/stale', async (req, res) => {
+  const sources = await req.xprisma.source.findMany({
+    where: {
+      AND: [
+        {
+          enabled: { equals: true }
+        },
+        {
+          OR: [
+            {
+              scannedAt: {
+                isSet: false
+              }
+            }, {
+              scannedAt: {
+                lte: dayjs().subtract(12, 'hour').toDate()
+              }
+            }
+          ]
+        },
+        {
+          state: {
+            not: "SCAN_REQUESTED"
+          }
+        }
+      ]
+    }
+  })
 
   return res.json(sources)
 })
