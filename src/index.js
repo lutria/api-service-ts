@@ -7,8 +7,7 @@ import dayjs from 'dayjs'
 import express from 'express'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
-import { NextFunction, Request, Response } from 'express'
-import { forUser } from './security'
+import { forUser } from './security.js'
 
 const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
@@ -23,7 +22,7 @@ app.use(bodyParser.json())
 app.use(express.json())
 
 // Middleware to create extended Prisma client with data security
-app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use(async (req, res, next) => {
   const userFromHeader = req.header('x-user')
   if (!userFromHeader) {
     return res.status(401).json({ error: "No user specified"})
@@ -41,37 +40,37 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   return next();
 })
 
-app.get('/providers', async (req, res) => {
-  const providers = await req.xprisma.provider.findMany()
-  res.json(providers)
+app.get('/sources', async (req, res) => {
+  const sources = await req.xprisma.source.findMany()
+  res.json(sources)
 })
 
-app.get('/provider/:id', async (req, res) => {
+app.get('/source/:id', async (req, res) => {
   const { id } = req.params
 
-  const provider = await req.xprisma.provider.findUnique({ where: { id }})
+  const source = await req.xprisma.source.findUnique({ where: { id }})
 
-  if (provider === null) {
-    return res.status(404).json({ error: "Provider not found" })
+  if (source === null) {
+    return res.status(404).json({ error: "Source not found" })
   }
 
-  res.json(provider)
+  res.json(source)
 })
 
-app.get('/provider/:id/sources', async (req, res, next) => {
+app.get('/source/:id/streams', async (req, res) => {
   const { id } = req.params
 
-  const sources = await req.xprisma.provider.findUnique({ where: { id } }).sources()
+  const streams = await req.xprisma.source.findUnique({ where: { id } }).streams()
 
-  if (sources === null) {
-    return res.status(404).json({ error: "Provider not found" })
+  if (streams === null) {
+    return res.status(404).json({ error: "Source not found" })
   }
 
-  return res.json(sources)
+  return res.json(streams)
 })
 
-app.get('/sources/stale', async (req, res) => {
-  const sources = await req.xprisma.source.findMany({
+app.get('/streams/stale', async (req, res) => {
+  const streams = await req.xprisma.stream.findMany({
     where: {
       AND: [
         {
@@ -99,22 +98,48 @@ app.get('/sources/stale', async (req, res) => {
     }
   })
 
-  return res.json(sources)
+  return res.json(streams)
 })
 
-app.get('/source/:id/items', async (req, res) => {
+app.put('/stream/:id', async (req, res) => {
+  logger.info(`Got update for stream`)
+  const { id } = req.params
+  logger.info(`Got update for stream with id ${id}`)
+
+  const stream = req.body
+
+  const update = await req.xprisma.stream.update({
+    where: { id },
+    data: {
+      state: stream.state != null ? stream.state : undefined,
+      name: stream.name != null ? stream.name : undefined,
+      externalType: stream.externalType != null ? stream.externalType : undefined,
+      externalId: stream.externalId != null ? stream.externalId : undefined,
+      enabled: stream.enabled != null ? stream.enabled : undefined,
+      scanCursor: stream.scanCursor != null ? stream.scanCursor : undefined,
+      scannedAt: stream.scannedAt != null ? stream.scannedAt : undefined,
+      updatedAt: new Date()
+    }
+  })
+
+  logger.info(update)
+
+  return res.json(update)
+})
+
+app.get('/stream/:id/items', async (req, res) => {
   const { id } = req.params
 
-  const items = await req.xprisma.source
+  const items = await req.xprisma.stream
     .findUnique({
       where: {
         id,
       }
     })
-    .mediaItems()
+    .contentItems()
 
   if (items === null) {
-    return res.status(404).json({ error: "Source not found" })
+    return res.status(404).json({ error: "Stream not found" })
   }
 
   res.json(items)
@@ -123,16 +148,16 @@ app.get('/source/:id/items', async (req, res) => {
 app.get('/item/:id', async (req, res) => {
   const { id } = req.params
 
-  const item = await req.xprisma.mediaItem.findUnique({ where: { id }})
+  const item = await req.xprisma.contentItem.findUnique({ where: { id }})
 
   if (item === null) {
-    return res.status(404).json({ error: "Item not found" })
+    return res.status(404).json({ error: "ContentItem not found" })
   }
 
   res.json(item)
 })
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err, req, res, next) => {
   req.log.error(err.stack)
   return res.status(500).json({ error: `Unexpected error: ${err.message}` })
 })

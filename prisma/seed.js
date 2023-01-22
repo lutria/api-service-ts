@@ -1,8 +1,8 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const userData: Prisma.UserCreateInput[] = [
+const userData = [
   {
     name: 'Admin',
     privileged: true
@@ -16,13 +16,13 @@ const userData: Prisma.UserCreateInput[] = [
   }
 ]
 
-const providerData: Prisma.ProviderCreateInput[] = [
+const sourceData = [
   {
     name: "Alpha",
     security: {
       protected: true
     },
-    sources: {
+    streams: {
       create: [
         {
           name: "News",
@@ -37,7 +37,7 @@ const providerData: Prisma.ProviderCreateInput[] = [
   {
     name: "Beta",
     security: {},
-    sources: {
+    streams: {
       create: [
         {
           name: "Cooking Show",
@@ -50,7 +50,7 @@ const providerData: Prisma.ProviderCreateInput[] = [
   {
     name: "Gamma",
     security: {},
-    sources: {
+    streams: {
       create: [
         {
           name: "Great Band",
@@ -59,7 +59,7 @@ const providerData: Prisma.ProviderCreateInput[] = [
           externalType: "channel",
           externalId: "ghfugifhdif383",
           scannedAt: new Date(Date.UTC(2022, 0, 12, 21, 12, 5)),
-          mediaItems: {
+          contentItems: {
             create: [
               {
                 name: "Great Band - Live Show",
@@ -90,11 +90,11 @@ async function main() {
     console.log(`Created user with id: ${user.id}`)
   }
 
-  for (const p of providerData) {
-    const provider = await prisma.provider.create({
-      data: p,
+  for (const s of sourceData) {
+    const source = await prisma.source.create({
+      data: s,
     })
-    console.log(`Created provider with id: ${provider.id}`)
+    console.log(`Created source with id: ${source.id}`)
   }
 
   console.log(`Seeding finished.`)

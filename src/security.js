@@ -10,12 +10,12 @@ const logger = pino({ level: process.env.LOG_LEVEL })
  * @param name
  * @returns true if the named model has data security applied, otherwise false
  */
-function isProtectedModel(name: string) {
+function isProtectedModel(name) {
   const model = Prisma.dmmf.datamodel.models.filter(m => m.name === name)[0]
   return model.fields.filter(f => f.name === 'security' && f.type === 'DataSecurity').length === 1
 }
 
-export async function wrapQuery({ model, operation, args, query }: { model: string, operation: string, args: any, query: Function}, privileged: boolean) {
+export async function wrapQuery({ model, operation, args, query }, privileged) {
   if (isProtectedModel(model)) {
     if (!privileged) {
       logger.debug(`Extending query for ${model}.${operation} with security filter`)
@@ -83,7 +83,7 @@ export async function wrapQuery({ model, operation, args, query }: { model: stri
   return query(args)
 }
 
-export function forUser({ privileged }: {privileged: boolean }) {
+export function forUser({ privileged }) {
   return Prisma.defineExtension((prisma) =>
     prisma.$extends({
       query: {

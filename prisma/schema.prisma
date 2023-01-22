@@ -23,61 +23,61 @@ model User {
 //   providerId   String      @db.ObjectId
 // }
 
-model Provider {
+model Source {
   id        String       @id @default(auto()) @map("_id") @db.ObjectId
   security  DataSecurity
   name      String       @unique
-  sources   Source[]
+  streams   Stream[]
   // Processing timestamps
   createdAt DateTime     @default(now())
 }
 
-model Source {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+model Stream {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
   security     DataSecurity
-  // Current state of this Source
-  state        SourceState  @default(UNSCANNED)
+  // Current state of this Stream
+  state        StreamState   @default(UNSCANNED)
   name         String
-  // Relation to parent Provider
-  provider     Provider     @relation(fields: [providerId], references: [id])
-  providerId   String       @db.ObjectId
-  // Provider-specific type that this Source represents
+  // Relation to parent Source
+  source       Source        @relation(fields: [sourceId], references: [id])
+  sourceId     String        @db.ObjectId
+  // Source-specific type that this Stream represents
   externalType String?
-  // Provider-specific identifier that this Source relates to
+  // Source-specific identifier that this Stream relates to
   externalId   String
-  // Indicates whether this Source has been deleted in the system
-  deleted      Boolean      @default(false)
-  // Indicates whether this Source should be scanned
-  enabled      Boolean      @default(true)
-  // externalRef of the most recently seen MediaItem
+  // Indicates whether this Stream has been deleted in the system
+  deleted      Boolean       @default(false)
+  // Indicates whether this Stream should be scanned
+  enabled      Boolean       @default(true)
+  // externalRef of the most recently seen ContentItem
   scanCursor   String?
-  // Relation to child MediaItems
-  mediaItems   MediaItem[]
+  // Relation to child ContentItems
+  contentItems ContentItem[]
   // Processing timestamps
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
   scannedAt    DateTime?
 }
 
-model MediaItem {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+model ContentItem {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
   security        DataSecurity
-  // Current state of this MediaItem
-  state           MediaItemState @default(SCANNED)
+  // Current state of this ContentItem
+  state           ContentItemState @default(SCANNED)
   name            String
   description     String?
   durationSeconds Int?
   publishedAt     DateTime?
-  // Relation to parent Source
-  source          Source         @relation(fields: [sourceId], references: [id])
-  sourceId        String         @db.ObjectId
+  // Relation to parent Stream
+  stream          Stream           @relation(fields: [streamId], references: [id])
+  streamId        String           @db.ObjectId
   // External reference, e.g. remote URL or ID
   externalRef     String
   // Relation to child PreviewAssets
   previewAssets   PreviewAsset[]
   // Processing timestamps
-  scannedAt       DateTime       @default(now())
+  scannedAt       DateTime         @default(now())
   reviewedAt      DateTime?
   fetchedAt       DateTime?
 }
@@ -104,7 +104,7 @@ enum PreviewAssetType {
   VIDEO
 }
 
-enum MediaItemState {
+enum ContentItemState {
   SCANNED
   FETCH_APPROVED
   FECTH_QUEUED
@@ -122,7 +122,7 @@ enum PreviewAssetState {
   FETCH_FAILED
 }
 
-enum SourceState {
+enum StreamState {
   UNSCANNED
   SCAN_REQUESTED
   SCAN_QUEUED
