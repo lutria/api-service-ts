@@ -102,9 +102,8 @@ app.get('/streams/stale', async (req, res) => {
 })
 
 app.put('/stream/:id', async (req, res) => {
-  logger.info(`Got update for stream`)
   const { id } = req.params
-  logger.info(`Got update for stream with id ${id}`)
+  logger.info(`Updating stream with id ${id}`)
 
   const stream = req.body
 
@@ -121,8 +120,6 @@ app.put('/stream/:id', async (req, res) => {
       updatedAt: new Date()
     }
   })
-
-  logger.info(update)
 
   return res.json(update)
 })
