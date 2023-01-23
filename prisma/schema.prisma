@@ -24,12 +24,13 @@ model User {
 // }
 
 model Source {
-  id        String       @id @default(auto()) @map("_id") @db.ObjectId
-  security  DataSecurity
-  name      String       @unique
-  streams   Stream[]
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  security    DataSecurity
+  name        String       @unique
+  displayName String       @unique
+  streams     Stream[]
   // Processing timestamps
-  createdAt DateTime     @default(now())
+  createdAt   DateTime     @default(now())
 }
 
 model Stream {

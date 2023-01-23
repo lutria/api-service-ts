@@ -18,7 +18,8 @@ const userData = [
 
 const sourceData = [
   {
-    name: "Alpha",
+    name: "com.alpha",
+    displayName: "Alpha",
     security: {
       protected: true
     },
@@ -35,7 +36,8 @@ const sourceData = [
     }
   },
   {
-    name: "Beta",
+    name: "com.beta",
+    displayName: "Beta",
     security: {},
     streams: {
       create: [
@@ -48,7 +50,8 @@ const sourceData = [
     },
   },
   {
-    name: "Gamma",
+    name: "com.gamma",
+    displayName: "Gamma",
     security: {},
     streams: {
       create: [

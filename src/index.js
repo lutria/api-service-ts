@@ -45,10 +45,10 @@ app.get('/sources', async (req, res) => {
   res.json(sources)
 })
 
-app.get('/source/:id', async (req, res) => {
-  const { id } = req.params
+app.get('/source/:name', async (req, res) => {
+  const { name } = req.params
 
-  const source = await req.xprisma.source.findUnique({ where: { id }})
+  const source = await req.xprisma.source.findUnique({ where: { name }})
 
   if (source === null) {
     return res.status(404).json({ error: "Source not found" })
@@ -57,10 +57,10 @@ app.get('/source/:id', async (req, res) => {
   res.json(source)
 })
 
-app.get('/source/:id/streams', async (req, res) => {
-  const { id } = req.params
+app.get('/source/:name/streams', async (req, res) => {
+  const { name } = req.params
 
-  const streams = await req.xprisma.source.findUnique({ where: { id } }).streams()
+  const streams = await req.xprisma.source.findUnique({ where: { name } }).streams()
 
   if (streams === null) {
     return res.status(404).json({ error: "Source not found" })
