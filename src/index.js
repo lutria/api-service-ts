@@ -7,7 +7,10 @@ import dayjs from 'dayjs'
 import express from 'express'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
+import NatsClient from './nats-client.js'
 import { forUser } from './security.js'
+
+const STREAM_SCAN_REQUEST_SUBJECT = "work.stream_scan_request"
 
 const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
@@ -20,6 +23,18 @@ app.use(pinoHttp({
 }))
 app.use(bodyParser.json())
 app.use(express.json())
+
+const natsClient = new NatsClient({
+  logger,
+  name: `api-service-${process.env.INSTANCE_ID}`,
+  servers: process.env.NATS_URL,
+})
+
+await natsClient.connect()
+
+natsClient.subscribe(STREAM_SCAN_REQUEST_SUBJECT, 'api-service', (data) => {
+  logger.info(`Got message: ${JSON.stringify(data)}`)
+})
 
 // Middleware to create extended Prisma client with data security
 app.use(async (req, res, next) => {
@@ -162,3 +177,25 @@ app.use((err, req, res, next) => {
 const server = app.listen(process.env.PORT, () => {
   logger.info(`⚡️ Server ready at http://localhost:${process.env.PORT}`)
 })
+
+const gracefulShutdown = () => {
+  logger.info('Shutting down')
+
+  natsClient.disconnect()
+    .finally(() => {
+      logger.info('NATS connection closed')
+
+      server.close((err) => {
+        if (err) {
+          logger.error(err)
+        }
+
+        logger.info('Express server closed')
+
+        process.exit(0)
+      })
+    })
+}
+
+process.on('SIGINT', gracefulShutdown)
+process.on('SIGTERM', gracefulShutdown)
