@@ -7,10 +7,8 @@ import dayjs from 'dayjs'
 import express from 'express'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
-import NatsClient from './nats-client.js'
+import { NatsClient, subjects } from '@lutria/nats-common/src/index.js'
 import { forUser } from './security.js'
-
-const STREAM_SCAN_REQUEST_SUBJECT = "work.stream_scan_request"
 
 const logger = pino({ level: process.env.LOG_LEVEL })
 const prisma = new PrismaClient()
@@ -32,7 +30,7 @@ const natsClient = new NatsClient({
 
 await natsClient.connect()
 
-natsClient.subscribe(STREAM_SCAN_REQUEST_SUBJECT, 'api-service', (data) => {
+natsClient.subscribe(subjects.STREAM_SCAN_REQUEST, 'api-service', (data) => {
   logger.info(`Got message: ${JSON.stringify(data)}`)
 })
 
