@@ -1,6 +1,3 @@
-import * as dotenv from 'dotenv'
-dotenv.config()
-
 import { PrismaClient } from '@prisma/client'
 import bodyParser from 'body-parser'
 import dayjs from 'dayjs'
