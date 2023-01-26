@@ -2,15 +2,14 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
   "name": "Node.js",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
-
-  "runArgs": ["--device=/dev/net/tun"],
 
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/tailscale/codespace/tailscale": {}
-  }
+  },
+
+  "runArgs": ["--device=/dev/net/tun"]
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
