@@ -1,39 +1,39 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 const userData = [
   {
-    name: 'Admin',
-    privileged: true
+    name: "Admin",
+    privileged: true,
   },
   {
-    name: 'svc-lutria',
-    privileged: true
+    name: "svc-lutria",
+    privileged: true,
   },
   {
-    name: 'Joe User'
-  }
-]
+    name: "Joe User",
+  },
+];
 
 const sourceData = [
   {
     name: "com.alpha",
     displayName: "Alpha",
     security: {
-      protected: true
+      protected: true,
     },
     streams: {
       create: [
         {
           name: "News",
           security: {
-            protected: true
+            protected: true,
           },
-          externalId: "News"
-        }
-      ]
-    }
+          externalId: "News",
+        },
+      ],
+    },
   },
   {
     name: "com.beta",
@@ -44,7 +44,7 @@ const sourceData = [
         {
           name: "Cooking Show",
           security: {},
-          externalId: "Cooking Show"
+          externalId: "Cooking Show",
         },
       ],
     },
@@ -71,44 +71,44 @@ const sourceData = [
                 previewAssets: [
                   {
                     type: "IMAGE",
-                    externalRef: "https://cdn.com/fndkggipe2392.jpg"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ]
-    }
-  }
-]
+                    externalRef: "https://cdn.com/fndkggipe2392.jpg",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+];
 
 async function main() {
-  console.log(`Start seeding...`)
+  console.log(`Start seeding...`);
 
   for (const u of userData) {
     const user = await prisma.user.create({
-      data: u
-    })
-    console.log(`Created user with id: ${user.id}`)
+      data: u,
+    });
+    console.log(`Created user with id: ${user.id}`);
   }
 
   for (const s of sourceData) {
     const source = await prisma.source.create({
       data: s,
-    })
-    console.log(`Created source with id: ${source.id}`)
+    });
+    console.log(`Created source with id: ${source.id}`);
   }
 
-  console.log(`Seeding finished.`)
+  console.log(`Seeding finished.`);
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });
