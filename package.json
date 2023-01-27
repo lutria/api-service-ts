@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon -q -r dotenv/config src/index.js | npx pino-pretty",
     "seed": "node prisma/seed.js",
-    "start": "node -r dotenv/config src/index.js"
+    "start": "node -r dotenv/config src/index.js",
+    "test": "jest --passWithNoTests"
   },
   "author": "dave@lutria.dev",
   "license": "ISC",
@@ -21,6 +22,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "jest": "^29.4.1",
     "nodemon": "^2.0.20",
     "prisma": "^4.9.0"
   }

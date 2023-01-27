@@ -1,5 +1,11 @@
 # api-service
 
+## Authenticate with Tailscale
+
+```shell
+sudo tailscale up --accept-routes
+```
+
 ## Setup hostname alias for Mongo replicaset connection
 
 This will add an entry to
