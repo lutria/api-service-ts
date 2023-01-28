@@ -17,6 +17,7 @@ sudo ./scripts/set-host-alias.sh <tailnet_hostname> mongo
 ```
 
 ## Prisma schema commands
+
 ```shell
 npx prisma format
 ```
