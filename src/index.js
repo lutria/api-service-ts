@@ -1,11 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import bodyParser from "body-parser";
-import dayjs from "dayjs";
 import express from "express";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { NatsClient, subjects } from "@lutria/nats-common/src/index.js";
 import { forUser } from "./security.js";
+import SourceDao from "./dao/SourceDao.js";
+import StreamDao from "./dao/StreamDao.js";
+import ItemDao from "./dao/ItemDao.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL });
 const prisma = new PrismaClient();
@@ -50,19 +52,27 @@ app.use(async (req, res, next) => {
     return res.status(401).json({ error: "User not found" });
   }
 
-  req.xprisma = prisma.$extends(forUser(user));
+  const xprisma = prisma.$extends(forUser(user));
+
+  req.context = {
+    itemDao: new ItemDao({ prisma: xprisma, logger }),
+    sourceDao: new SourceDao({ prisma: xprisma, logger }),
+    streamDao: new StreamDao({ prisma: xprisma, logger }),
+    xprisma,
+  };
+
   return next();
 });
 
 app.get("/sources", async (req, res) => {
-  const sources = await req.xprisma.source.findMany();
+  const sources = await req.context.sourceDao.findAll();
   res.json(sources);
 });
 
 app.get("/source/:name", async (req, res) => {
   const { name } = req.params;
 
-  const source = await req.xprisma.source.findUnique({ where: { name } });
+  const source = await req.context.sourceDao.findByName(name);
 
   if (source === null) {
     return res.status(404).json({ error: "Source not found" });
@@ -74,88 +84,41 @@ app.get("/source/:name", async (req, res) => {
 app.get("/source/:name/streams", async (req, res) => {
   const { name } = req.params;
 
-  const streams = await req.xprisma.source
-    .findUnique({ where: { name } })
-    .streams();
-
-  if (streams === null) {
-    return res.status(404).json({ error: "Source not found" });
-  }
+  const streams = await req.context.streamDao.findManyBySource(name);
 
   return res.json(streams);
 });
 
 app.get("/streams/stale", async (req, res) => {
-  const streams = await req.xprisma.stream.findMany({
-    where: {
-      AND: [
-        {
-          enabled: { equals: true },
-        },
-        {
-          OR: [
-            {
-              scannedAt: {
-                isSet: false,
-              },
-            },
-            {
-              scannedAt: {
-                lte: dayjs().subtract(12, "hour").toDate(),
-              },
-            },
-          ],
-        },
-        {
-          state: {
-            not: "SCAN_REQUESTED",
-          },
-        },
-      ],
-    },
-  });
-
+  const streams = await req.context.streamDao.findStale();
   return res.json(streams);
 });
 
-app.put("/stream/:id", async (req, res) => {
-  const { id } = req.params;
-  logger.info(`Updating stream with id ${id}`);
+app.put("/stream/:name", async (req, res) => {
+  const { name } = req.params;
+  logger.info(`Updating stream with name ${name}`);
 
-  const stream = req.body;
+  const data = req.body;
 
-  const update = await req.xprisma.stream.update({
-    where: { id },
-    data: {
-      state: stream.state != null ? stream.state : undefined,
-      name: stream.name != null ? stream.name : undefined,
-      externalType:
-        stream.externalType != null ? stream.externalType : undefined,
-      externalId: stream.externalId != null ? stream.externalId : undefined,
-      enabled: stream.enabled != null ? stream.enabled : undefined,
-      scanCursor: stream.scanCursor != null ? stream.scanCursor : undefined,
-      scannedAt: stream.scannedAt != null ? stream.scannedAt : undefined,
-      updatedAt: new Date(),
-    },
-  });
+  const stream = {
+    state: data.state != null ? data.state : undefined,
+    displayName: data.displayName != null ? data.displayName : undefined,
+    externalType: data.externalType != null ? data.externalType : undefined,
+    externalId: data.externalId != null ? data.externalId : undefined,
+    enabled: data.enabled != null ? data.enabled : undefined,
+    scanCursor: data.scanCursor != null ? data.scanCursor : undefined,
+    scannedAt: data.scannedAt != null ? data.scannedAt : undefined,
+  };
+
+  const update = await req.context.streamDao.update(name, stream);
 
   return res.json(update);
 });
 
-app.get("/stream/:id/items", async (req, res) => {
-  const { id } = req.params;
+app.get("/stream/:name/items", async (req, res) => {
+  const { name } = req.params;
 
-  const items = await req.xprisma.stream
-    .findUnique({
-      where: {
-        id,
-      },
-    })
-    .contentItems();
-
-  if (items === null) {
-    return res.status(404).json({ error: "Stream not found" });
-  }
+  const items = await req.context.itemDao.findManyByStream(name);
 
   res.json(items);
 });
@@ -163,7 +126,9 @@ app.get("/stream/:id/items", async (req, res) => {
 app.get("/item/:id", async (req, res) => {
   const { id } = req.params;
 
-  const item = await req.xprisma.contentItem.findUnique({ where: { id } });
+  const item = await req.context.xprisma.contentItem.findUnique({
+    where: { id },
+  });
 
   if (item === null) {
     return res.status(404).json({ error: "ContentItem not found" });

@@ -18,7 +18,7 @@ const userData = [
 
 const sourceData = [
   {
-    name: "com.alpha",
+    name: "dev.lutria.source-c83fe81",
     displayName: "Alpha",
     security: {
       protected: true,
@@ -26,7 +26,8 @@ const sourceData = [
     streams: {
       create: [
         {
-          name: "News",
+          name: "dev.lutria.stream-ab39472",
+          displayName: "News",
           security: {
             protected: true,
           },
@@ -42,7 +43,8 @@ const sourceData = [
     streams: {
       create: [
         {
-          name: "Cooking Show",
+          name: "com.beta.cooking-show",
+          displayName: "Cooking Show",
           security: {},
           externalId: "Cooking Show",
         },
@@ -56,7 +58,8 @@ const sourceData = [
     streams: {
       create: [
         {
-          name: "Great Band",
+          name: "com.gamma.great-band",
+          displayName: "Great Band",
           security: {},
           state: "SCAN_COMPLETE",
           externalType: "channel",

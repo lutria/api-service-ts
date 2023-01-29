@@ -38,7 +38,8 @@ model Stream {
   security     DataSecurity
   // Current state of this Stream
   state        StreamState   @default(UNSCANNED)
-  name         String
+  name         String        @unique
+  displayName  String
   // Relation to parent Source
   source       Source        @relation(fields: [sourceId], references: [id])
   sourceId     String        @db.ObjectId
