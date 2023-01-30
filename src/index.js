@@ -3,12 +3,13 @@ import bodyParser from "body-parser";
 import express from "express";
 import pino from "pino";
 import pinoHttp from "pino-http";
-import { NatsClient, subjects } from "@lutria/nats-common/src/index.js";
+import { NatsClient } from "@lutria/nats-common/src/index.js";
 import { forUser } from "./security.js";
 import SourceDao from "./dao/SourceDao.js";
 import StreamDao from "./dao/StreamDao.js";
 import ItemDao from "./dao/ItemDao.js";
 import routes from "./rest/routes.js";
+import EventService from "./service/EventService.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL });
 const prisma = new PrismaClient();
@@ -19,11 +20,12 @@ const natsClient = new NatsClient({
   servers: process.env.NATS_URL,
 });
 
-await natsClient.connect();
-
-natsClient.subscribe(subjects.STREAM_SCAN_REQUEST, "api-service", (data) => {
-  logger.info(`Got message: ${JSON.stringify(data)}`);
+const eventService = new EventService({
+  natsClient,
+  logger,
+  streamDao: new StreamDao({ prisma, logger }),
 });
+await eventService.start();
 
 const app = express();
 

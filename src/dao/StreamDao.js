@@ -35,7 +35,7 @@ class StreamDao {
           },
           {
             state: {
-              not: "SCAN_REQUESTED",
+              not: "SCAN_QUEUED",
             },
           },
         ],
