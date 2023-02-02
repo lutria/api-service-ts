@@ -1,4 +1,4 @@
-import { subjects } from "@lutria/nats-common/src/index.js";
+import { subjects } from "@lutria/nats-common";
 
 class EventService {
   constructor({ natsClient, logger, streamDao }) {
@@ -19,8 +19,10 @@ class EventService {
 
   async handleStreamScanRequest(event) {
     const state = "SCAN_QUEUED";
-    this.logger.info(`Updating state of stream ${event.name} to ${state}`);
-    await this.streamDao.update(event.name, { state });
+    this.logger.info(
+      `Updating state of stream ${event.streamName} to ${state}`
+    );
+    await this.streamDao.update(event.streamName, { state });
   }
 }
 

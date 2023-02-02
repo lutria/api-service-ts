@@ -17,6 +17,9 @@ class StreamDao {
       where: {
         AND: [
           {
+            deleted: { equals: false },
+          },
+          {
             enabled: { equals: true },
           },
           {
@@ -39,6 +42,13 @@ class StreamDao {
             },
           },
         ],
+      },
+      include: {
+        source: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
   }

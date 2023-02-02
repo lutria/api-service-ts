@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import express from "express";
 import pino from "pino";
 import pinoHttp from "pino-http";
-import { NatsClient } from "@lutria/nats-common/src/index.js";
+import { NatsClient } from "@lutria/nats-common";
 import { forUser } from "./security.js";
 import SourceDao from "./dao/SourceDao.js";
 import StreamDao from "./dao/StreamDao.js";
